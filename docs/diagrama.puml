@@ -1,0 +1,28 @@
+@startuml
+title Diagrama de classes UML do Simulador de Hidrometro
+
+class Saida {
+
+}
+
+class Entrada {
+
+}
+
+class Display {
+
+}
+
+class Medicao {
+
+}
+
+class Hidrometro {
+
+}
+
+class Controlador {
+
+}
+
+@enduml
