@@ -1,28 +1,51 @@
 @startuml
 title Diagrama de classes UML do Simulador de Hidrometro
 
-class Saida {
+class Cano {
+    - bitola: float
+    - pressao: float
+    - vazao: float
 
-}
-
-class Entrada {
-
+    + getBitola(): float
+    + getPressao(): float
+    + getVazao(): float
+    + setVolume(volume: float): void
 }
 
 class Display {
-
+    - imagemBase: Image
+    + exibirImagem(consumo: int): void
 }
 
 class Medicao {
-
+    + medir(entrada: Cano, saida: Cano): int
 }
 
 class Hidrometro {
+    - entrada: Cano
+    - saida: Cano
+    - consumo: int
+    - consumoMax: int
+    - medidor: Medicao
 
+    + setEntrada(cano: Cano): void
+    + getConsumo(): int
+    - atualizarConsumo(): void
 }
 
 class Controlador {
+    - hidrometro: Hidrometro
+    - display: Display
+    - intervaloImagem: int
 
+    + controlar(): void
 }
+
+'--- Relações ---
+Hidrometro *-- Cano : entrada
+Hidrometro *-- Cano : saida
+Hidrometro *-- Medicao: mede
+Controlador o-- Hidrometro : controla
+Controlador o-- Display : controla
 
 @enduml
