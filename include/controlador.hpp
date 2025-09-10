@@ -23,6 +23,13 @@ class Controlador {
             valor = round(valor * 10.0f) / 10.0f;
             return valor;
         }
+
+        bool gerarArAleatorio() {
+            uniform_int_distribution<int> dist(1, 10);
+            int valor = dist(gen);
+
+            return valor > 8 ? true : false;
+        }
         
         void controlar();
         
