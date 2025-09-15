@@ -2,9 +2,11 @@
 
 #include "hidrometro.hpp"
 #include "display.hpp"
+#include "ImageManager.hpp"
 #include <random>
 #include <atomic>
 #include <thread>
+#include <string>
 
 using namespace std;
 
@@ -13,8 +15,9 @@ class Controlador {
         int intervaloImagem;
         Hidrometro& hidrometro;
         Display& display;
+        ImageManager& im;
         atomic<bool> parar{false};
-        thread t;
+        thread tControle, tDisplay;
         mt19937 gen{(random_device{}())};
 
         float gerarVazaoAleatoria() {
@@ -30,22 +33,31 @@ class Controlador {
 
             return valor > 8 ? true : false;
         }
+
+        string formatarConsumoTotal() {
+            return (to_string(this->hidrometro.getVolume()) + to_string(this->hidrometro.getCentenasLitros()) + to_string(this->hidrometro.getDezenasLitros()));
+        }
         
         void controlar();
+        void exibicao();
         
     public:
         Controlador(int intervaloImagem, Hidrometro& hidrometro, 
-        Display& display) : intervaloImagem(intervaloImagem), 
-        hidrometro(hidrometro), display(display) {}
+        Display& display, ImageManager& im) : intervaloImagem(intervaloImagem), 
+        hidrometro(hidrometro), display(display), im(im) {}
         
         void iniciarControle() {
             this->parar = false;
-            t = thread(&Controlador::controlar, this);
+            tControle = thread(&Controlador::controlar, this);
+            tDisplay = thread(&Controlador::exibicao, this);
         }
 
         void pararControle() {
             this->parar = true;
-            if (t.joinable())
-                t.join();
+            if (tControle.joinable())
+                this->tControle.join();
+            if (tDisplay.joinable())
+                this->tDisplay.join();
+            
         }
 };

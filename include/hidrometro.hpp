@@ -15,6 +15,7 @@ class Hidrometro {
         int volumeMax;
         float consumo, perdaAr;
         int dezenasLitros, centenasLitros, volume;
+        mutex mtxDezenas, mtxCentenas, mtxVolume;
         
     public:
         Hidrometro(Cano& entrada, Cano& saida, int volumeMax, float perdaAr)
@@ -29,9 +30,20 @@ class Hidrometro {
             return this->entrada;
         }
 
-        int getDezenasLitros() const {return this->dezenasLitros;}
-        int getCentenasLitros() const {return this->centenasLitros;}
-        int getVolume() const {return this->volume;}
+        int getDezenasLitros() {
+            lock_guard<mutex> lockVolume(mtxVolume);
+            return this->dezenasLitros;
+        
+        }
+        int getCentenasLitros() {
+            lock_guard<mutex> lockCentenas(mtxCentenas);
+            return this->centenasLitros;
+        }
+
+        int getVolume() {
+            lock_guard<mutex> lockDezenas(mtxDezenas);
+            return this->volume;
+        }
 
         void medir();
 };

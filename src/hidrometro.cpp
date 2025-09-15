@@ -1,4 +1,4 @@
-#include "hidrometro.hpp"
+#include "Hidrometro.hpp"
 #include <cmath>
 
 void Hidrometro::medir() {

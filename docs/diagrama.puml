@@ -3,23 +3,25 @@ title Diagrama de classes UML do Simulador de Hidrometro
 
 class Cano {
     - bitola: float
-    ' - pressao: float
-    - tempoSegundos: int
+    - tempoMiliseg: int
     - vazao: float
     - isAr: bool
 
     + getBitola(): float
-    ' + getPressao(): float
     + getVazao(): float
-    + getTempoSegundos(): int
+    + getTempoMiliseg(): int
     + getIsAr(): Bool
     + setVazao(vazao: float): void
     + setIsAr(isAr: bool): void
 }
 
 class Display {
-    - imagemBase: Image
-    + exibirImagem(consumo: int): void
+    - sequencia: int
+    - caminhoImagemBase: string
+
+    - avancarSequencia(): void
+    + gerarImagem(consumo: string): void
+    + getSequencia(): int
 }
 
 class Hidrometro {
@@ -44,12 +46,21 @@ class Controlador {
     - intervaloImagem: int
     - hidrometro: Hidrometro
     - display: Display
+    - im: ImageManager
     - parar: bool
 
     - gerarVazaoAleatoria(): float
+    - gerarArAleatorio: bool
+    - formatarConsumoTotal: string
     - controlar(): void
+    - exibicao(): void
     + iniciarControle(): void
     + pararControle(): void
+}
+
+class ImageManager {
+    + abrirImagem: Process
+    + fecharImagem(processo: Process): void
 }
 
 '--- Relações ---
@@ -57,5 +68,6 @@ Hidrometro o-- Cano : entrada
 Hidrometro o-- Cano : saida
 Controlador o-- Hidrometro : controla
 Controlador o-- Display : controla
+Controlador o-- ImageManager : controla
 
 @enduml
