@@ -3,16 +3,14 @@
 #include <iostream>
 #include <sstream>
 #include <iomanip>
+#include <opencv2/opencv.hpp>
 
 using namespace std;
 
-void Display::gerarImagem(string consumo) {
+void Display::gerarImagem(string consumo, string nomeImagem) {
     int qnt_digitos = 6;
     
-    string sequenciaStr = to_string(this->sequencia);
-    this->avancarSequencia();
-
-    string caminhoImagemSaida = "../images/medicoes_202311250016/" + sequenciaStr + ".png";
+    string caminhoImagemSaida = nomeImagem;
 
     string valorDisplay = string(qnt_digitos - consumo.size(), '0') + consumo;
 
@@ -48,5 +46,30 @@ void Display::gerarImagem(string consumo) {
 
     } catch (const exception& ex) {
         cerr << "Erro: " << ex.what() << endl;
+    }
+}
+
+void Display::pngParaJpeg(const string caminhoImagem) {
+    string saida;
+    if (caminhoImagem.size() >= 4 && caminhoImagem.substr(caminhoImagem.size() - 4) == ".png")
+        saida = caminhoImagem.substr(0, caminhoImagem.size() - 4) + ".jpeg";
+    else {
+        cerr << "O arquivo não é .png" << endl;
+        return;
+    }
+
+    cv::Mat img = cv::imread(caminhoImagem, cv::IMREAD_UNCHANGED);
+    if (img.empty()) {
+        cerr << "Erro: não foi possível abrir " << caminhoImagem << endl;
+        return;
+    }
+
+    std::vector<int> params;
+    params.push_back(cv::IMWRITE_JPEG_QUALITY);
+    params.push_back(95);  // qualidade alta (95%)
+
+    if (!cv::imwrite(saida, img, params)) {
+        cerr << "Erro: não foi possível salvar " << saida << endl;
+        return;
     }
 }

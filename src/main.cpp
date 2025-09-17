@@ -14,7 +14,7 @@ int main(void) {
     int intervaloImagem = 2;
     int volumeMaximo = 999;
 
-    Cano c1(1.5, 100);
+    Cano c1(1.5, 80);
     Cano c2(2.5, 100);
     Hidrometro h(c1, c2, volumeMaximo, perdaAr);
     Display d("../images/base/imagem_base_hidrometro.png");

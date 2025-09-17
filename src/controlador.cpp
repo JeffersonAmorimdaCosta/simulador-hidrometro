@@ -3,6 +3,7 @@
 #include <thread>
 #include <iostream>
 #include <filesystem>
+#include <cstdio>
 
 using namespace std;
 
@@ -32,14 +33,25 @@ void Controlador::controlar() {
 }
 
 void Controlador::exibicao() {
+    string caminhoRel = "../images/medicoes_202311250016/";
+    int m3 = 1;
+    string caminhoAbs;
+    bool salvar;
     while (!this->parar) {
-        int sequencia = this->display.getSequencia();
-        string caminhoRel = "../images/medicoes_202311250016/";
-        string caminhoAbs = filesystem::absolute(caminhoRel + to_string(sequencia) + ".png").string();
+        caminhoAbs = filesystem::absolute(caminhoRel + to_string(m3) + ".png").string();
 
-        this->display.gerarImagem(this->formatarConsumoTotal());
+        salvar = this->hidrometro.getVolume() == m3;
+
+        this->display.gerarImagem(this->formatarConsumoTotal(), caminhoAbs);
         auto p = this->im.abrirImagem(caminhoAbs);
         this_thread::sleep_for(chrono::seconds(this->intervaloImagem));
         this->im.fecharImagem(p);
+        
+        if (salvar) {
+            this->display.pngParaJpeg(caminhoAbs);
+            m3++;
+        }
+
+        remove(caminhoAbs.c_str());
     }
 }
