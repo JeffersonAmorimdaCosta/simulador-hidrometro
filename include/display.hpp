@@ -8,8 +8,7 @@ class Display {
     private:
         string caminhoImagemBase;
 
-        
-        public:
+    public:
         Display(string caminhoImagemBase) : caminhoImagemBase(caminhoImagemBase) {}
         
         void gerarImagem(string consumo, string nomeImagem);

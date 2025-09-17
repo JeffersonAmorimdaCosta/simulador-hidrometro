@@ -38,7 +38,7 @@ void Controlador::exibicao() {
     string caminhoAbs;
     bool salvar;
     while (!this->parar) {
-        caminhoAbs = filesystem::absolute(caminhoRel + to_string(m3) + ".png").string();
+        caminhoAbs = filesystem::absolute(caminhoRel + '0' + to_string(m3) + ".png").string();
 
         salvar = this->hidrometro.getVolume() == m3;
 

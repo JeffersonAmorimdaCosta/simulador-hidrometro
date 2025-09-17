@@ -16,12 +16,10 @@ class Cano {
 }
 
 class Display {
-    - sequencia: int
     - caminhoImagemBase: string
 
-    - avancarSequencia(): void
-    + gerarImagem(consumo: string): void
-    + getSequencia(): int
+    + gerarImagem(consumo: string, nomeImagem: string): void
+    + pngParaJpeg(caminhoImagem: string): string
 }
 
 class Hidrometro {
