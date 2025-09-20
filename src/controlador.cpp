@@ -1,9 +1,10 @@
-#include "Controlador.hpp"
+#include "controlador.hpp"
 #include <chrono>
 #include <thread>
 #include <iostream>
 #include <filesystem>
 #include <cstdio>
+#include <sstream>
 
 using namespace std;
 
@@ -22,12 +23,6 @@ void Controlador::controlar() {
         string agua_ou_ar = this->hidrometro.getEntrada().getIsAr() ? "(ar)" : " "; 
 
         this->hidrometro.getEntrada().setVazao(vazaoAleatoria);
-
-        // cout << "Vazao atual: " << vazaoAleatoria << agua_ou_ar << endl;
-        // cout << "Dezenas | Centenas de Litros: " << this->hidrometro.getCentenasLitros()
-        // << '|' << this->hidrometro.getDezenasLitros() << endl;
-        // cout << "Volume: " << this->hidrometro.getVolume() << " m3" << endl << endl;
-
         this->hidrometro.medir();
     }
 }
@@ -37,21 +32,36 @@ void Controlador::exibicao() {
     int m3 = 1;
     string caminhoAbs;
     bool salvar;
-    while (!this->parar) {
-        caminhoAbs = filesystem::absolute(caminhoRel + '0' + to_string(m3) + ".png").string();
+    while (!this->parar.load()) {
+        stringstream oss;
+        oss << setw(2) << setfill('0') << m3 << ".jpeg";
+        caminhoAbs = filesystem::absolute(caminhoRel + oss.str()).string();
 
         salvar = this->hidrometro.getVolume() == m3;
 
-        this->display.gerarImagem(this->formatarConsumoTotal(), caminhoAbs);
-        auto p = this->im.abrirImagem(caminhoAbs);
-        this_thread::sleep_for(chrono::seconds(this->intervaloImagem));
-        this->im.fecharImagem(p);
-        
-        if (salvar) {
-            this->display.pngParaJpeg(caminhoAbs);
-            m3++;
+        cv::Mat frame = this->display.gerarImagem(this->consumoFormatado());
+
+        if (frame.empty()) {
+            cerr << "Falha ao gerar a imagem!" << endl;
+            return;
         }
 
-        remove(caminhoAbs.c_str());
-    }
+        this->display.exibirImagem(frame, this->intervaloImagem);
+        
+        if (salvar) {
+            this->display.salvarImagemJpeg(frame, caminhoAbs);
+            m3++;
+        }
+    }    
+}
+
+void Controlador::iniciarControle() {
+    this->parar = false;
+    tControle = thread(&Controlador::controlar, this);
+}
+
+void Controlador::pararControle() {
+    this->parar = true;
+    if (tControle.joinable())
+        this->tControle.join();
 }

@@ -17,9 +17,11 @@ class Cano {
 
 class Display {
     - caminhoImagemBase: string
+    - nomeJanela: string
 
-    + gerarImagem(consumo: string, nomeImagem: string): void
-    + pngParaJpeg(caminhoImagem: string): string
+    + gerarImagem(consumo: string): frame
+    + exibirImagem(frame: frame, tempo: int): void
+    + salvarImagemJpeg(frame: frame, caminho: string): void
 }
 
 class Hidrometro {
@@ -44,21 +46,15 @@ class Controlador {
     - intervaloImagem: int
     - hidrometro: Hidrometro
     - display: Display
-    - im: ImageManager
     - parar: bool
 
     - gerarVazaoAleatoria(): float
     - gerarArAleatorio: bool
-    - formatarConsumoTotal: string
+    - consumoFormatado: string
     - controlar(): void
-    - exibicao(): void
     + iniciarControle(): void
     + pararControle(): void
-}
-
-class ImageManager {
-    + abrirImagem: Process
-    + fecharImagem(processo: Process): void
+    + exibicao(): void
 }
 
 '--- Relações ---
@@ -66,6 +62,5 @@ Hidrometro o-- Cano : entrada
 Hidrometro o-- Cano : saida
 Controlador o-- Hidrometro : controla
 Controlador o-- Display : controla
-Controlador o-- ImageManager : controla
 
 @enduml

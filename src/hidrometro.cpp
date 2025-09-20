@@ -4,6 +4,8 @@
 void Hidrometro::medir() {
     float aumento = this->entrada.getVazao();
     float aumento_final = this->entrada.getIsAr() ? aumento * this->perdaAr : aumento;
+
+    lock_guard<mutex> lock(mtx);
     this->consumo = round((this->consumo + aumento_final) * 10.0f) / 10.0f;
 
     while (this->consumo >= 10) {

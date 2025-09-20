@@ -1,75 +1,57 @@
 #include "Display.hpp"
-#include <cairomm/cairomm.h>
+// #include <cairomm/cairomm.h>
 #include <iostream>
 #include <sstream>
 #include <iomanip>
-#include <opencv2/opencv.hpp>
+#include <atomic>
 
 using namespace std;
 
-void Display::gerarImagem(string consumo, string nomeImagem) {
-    int qnt_digitos = 6;
-    
-    string caminhoImagemSaida = nomeImagem;
+cv::Mat Display::gerarImagem(string consumo) {
+    cv::Mat imagemBase = cv::imread(this->caminhoImagemBase);
 
-    string valorDisplay = string(qnt_digitos - consumo.size(), '0') + consumo;
-
-    try {
-        Cairo::RefPtr<Cairo::ImageSurface> surface = 
-            Cairo::ImageSurface::create_from_png(this->caminhoImagemBase);
-        Cairo::RefPtr<Cairo::Context> cr = Cairo::Context::create(surface);
-
-        cr->set_source_rgb(0.0, 0.0, 0.0);
-
-        cr->select_font_face("Sans",
-            Cairo::ToyFontFace::Slant::NORMAL,
-            Cairo::ToyFontFace::Weight::BOLD);
-
-        cr->set_font_size(45.0);
-
-        int y = 388, xInicial = 410, incremento = 38, cont = 0;
-
-        for (auto digito : valorDisplay) {
-            if (cont < 4) {
-                cr->set_source_rgb(0.0, 0.0, 0.0);
-            } else {
-                cr->set_source_rgb(1.0, 0.0, 0.0);
-            }
-            
-            cr->move_to(xInicial + (cont * incremento), y);
-            string digitoStr(1, digito);
-            cr->show_text(digitoStr);
-            cont++;
-        }
-
-        surface->write_to_png(caminhoImagemSaida);
-
-    } catch (const exception& ex) {
-        cerr << "Erro: " << ex.what() << endl;
+    if (imagemBase.empty()) {
+        cerr << "ERRO: Nao foi possivel carregar a imagem" << endl;
+        return cv::Mat();
     }
+
+    int qntDigitos = 6;
+    string valorDisplay = string(qntDigitos - consumo.size(), '0') + consumo;
+    
+    cv::Mat frame = imagemBase.clone();
+    
+    int pos_x = 408, pos_y = 390;
+
+    int tipoFonte = cv::FONT_HERSHEY_PLAIN;
+    double escalaFonte = 2.8;
+    cv::Scalar corTexto(0, 0, 0);
+    int espessura = 4;
+    
+    int cont = 0;
+
+    for (auto digito : valorDisplay) {
+        if (cont >= 4)
+            corTexto = cv::Scalar(0, 0, 255);
+
+        cv::Point posicaoTexto(pos_x, pos_y);
+        cv::putText(frame, string(1, digito), posicaoTexto, tipoFonte, escalaFonte, corTexto, espessura, cv::LINE_AA);
+        pos_x += 38;
+        cont++;
+    }
+    
+    cv::resizeWindow(this->nomeJanela, 800, 700);
+    cv::moveWindow(this->nomeJanela, 0, 0);
+
+    return frame;
 }
 
-void Display::pngParaJpeg(const string caminhoImagem) {
-    string saida;
-    if (caminhoImagem.size() >= 4 && caminhoImagem.substr(caminhoImagem.size() - 4) == ".png")
-        saida = caminhoImagem.substr(0, caminhoImagem.size() - 4) + ".jpeg";
-    else {
-        cerr << "O arquivo não é .png" << endl;
-        return;
-    }
+void Display::exibirImagem(cv::Mat& frame, int tempo) {
+    cv::imshow(this->nomeJanela, frame);
+    cv::waitKey(tempo);
+}
 
-    cv::Mat img = cv::imread(caminhoImagem, cv::IMREAD_UNCHANGED);
-    if (img.empty()) {
-        cerr << "Erro: não foi possível abrir " << caminhoImagem << endl;
-        return;
-    }
-
-    std::vector<int> params;
-    params.push_back(cv::IMWRITE_JPEG_QUALITY);
-    params.push_back(95);  // qualidade alta (95%)
-
-    if (!cv::imwrite(saida, img, params)) {
-        cerr << "Erro: não foi possível salvar " << saida << endl;
-        return;
+void Display::salvarImagemJpeg(cv::Mat& frame, string caminho) {
+    if (!cv::imwrite(caminho, frame)) {
+        cerr << "ERRO: nao foi possivel salvar a imagem em " << caminho << endl;
     }
 }
