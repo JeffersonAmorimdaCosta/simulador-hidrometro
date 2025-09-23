@@ -32,7 +32,30 @@ O simulador considera diversos fatores que influenciam a medição do consumo de
 
 ---
 
-## 🛠️ 3. Instalação
+## 📐 3. Diagrama de Classes
+
+O diagrama foi elaborado utilizando a ferramenta **[PlantUML](https://plantuml.com/class-diagram)**, que permite a criação de diagramas a partir de uma descrição em texto simples, facilitando a **manutenção**, **documentação** e **colaboração** no desenvolvimento do sistema.  
+
+O diagrama abaixo representa a estrutura principal do sistema, mostrando as entidades envolvidas, seus atributos e métodos, além dos relacionamentos entre elas.
+
+![Diagrama de Classes](docs/diagrama_classes.pdf)
+
+> 🔎 O arquivo-fonte em **PUML** utilizado para gerar este diagrama está disponível em:  
+> [`src/diagrama_classes.puml`](docs/diagrama_classes.puml)
+
+---
+
+## ⚙️ Como gerar o diagrama
+
+Para visualizar ou modificar o diagrama:
+
+1. Instale o [PlantUML](https://plantuml.com/starting) ou use uma ferramenta online como [PlantText](https://www.planttext.com/) ou [PlantUML Online Server](https://www.plantuml.com/plantuml/).
+2. Abra o arquivo `diagrama_classes.puml`.
+3. Gere a imagem (`.png`, `.svg` ou `.pdf`) a partir do código PUML.
+
+---
+
+## 🛠️ 4. Instalação
 
 1. Clone o repositório:
 ```bash
