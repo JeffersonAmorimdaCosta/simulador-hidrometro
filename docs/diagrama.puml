@@ -1,5 +1,60 @@
 @startuml
+
 title Diagrama de classes UML do Simulador de Hidrometro
+
+skinparam {
+    ' Fonte utilizada no diagrama
+    DefaultFontName "Segoe UI, Arial"
+    DefaultFontSize 12
+    
+    ' Desativa a aparência de "desenho à mão"
+    handwritten false
+    
+    ' Adiciona sombra aos elementos para dar profundidade
+    shadowing true
+    
+    ' --- Configuração das Classes ---
+    class {
+        ' Cores
+        BackgroundColor #F8F9FA
+        BorderColor #495057
+        BorderThickness 2
+
+        FontName "Segoe UI, Arial"
+        FontColor #212529
+        FontSize 12
+
+        HeaderBackgroundColor #DDE8F3
+        HeaderFontColor #212529
+        HeaderFontSize 14
+        HeaderFontStyle bold
+        
+        ' Cantos arredondados
+        RoundCorner 10
+    }
+    
+    ' --- Configuração das Notas ---
+    note {
+        BackgroundColor #FFFFE0
+        BorderColor #555555
+    }
+    
+    ' --- Configuração dos Pacotes (Packages) ---
+    package {
+        BackgroundColor #F0F0F0
+        BorderColor #AAAAAA
+        BorderThickness 1
+        FontStyle bold
+    }
+}
+
+' --- Parâmetros de Layout ---
+' Usa linhas ortogonais (retas) para um visual mais limpo
+skinparam linetype ortho
+
+' Oculta ícones de visibilidade de atributos e membros vazios
+skinparam classAttributeIconSize 0
+hide empty members
 
 class Cano {
     - bitola: float
@@ -58,8 +113,7 @@ class Controlador {
 }
 
 '--- Relações ---
-Hidrometro o-- Cano : entrada
-Hidrometro o-- Cano : saida
+Hidrometro o-- Cano : entrada/saida
 Controlador o-- Hidrometro : controla
 Controlador o-- Display : controla
 
