@@ -7,6 +7,8 @@
 #include <thread>
 #include <string>
 #include <mutex>
+#include <vector>
+#include <filesystem>
 
 using namespace std;
 
@@ -18,6 +20,9 @@ class Controlador {
         atomic<bool> parar{false};
         thread tControle, tDisplay;
         mt19937 gen{(random_device{}())};
+        filesystem::path diretorioSaida;
+        bool salvarImagens;
+        int proximoVolumeSnapshot{1};
 
         float gerarVazaoAleatoria() {
             uniform_real_distribution<float> dist(8, 15);
@@ -33,18 +38,16 @@ class Controlador {
             return valor > 8 ? true : false;
         }
 
-        string consumoFormatado() {
-            return (to_string(this->hidrometro.getVolume()) + to_string(this->hidrometro.getCentenasLitros()) + to_string(this->hidrometro.getDezenasLitros()));
-        }
-        
+        string consumoFormatado();
+
         void controlar();
-        
+        void exibicao();
+
         public:
             Controlador(int intervaloImagem, Hidrometro& hidrometro, 
-            Display& display) : intervaloImagem(intervaloImagem), 
-            hidrometro(hidrometro), display(display) {}
-            
+            Display& display, filesystem::path diretorioSaida = {});
+            ~Controlador();
+
             void iniciarControle();
             void pararControle();
-            void exibicao();
 };

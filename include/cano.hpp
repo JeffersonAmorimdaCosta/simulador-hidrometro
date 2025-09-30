@@ -14,31 +14,19 @@ class Cano {
         mutex mtxVazao;
 
     public:
-        Cano(float bitola, int tempoMiliseg) : bitola(bitola), vazao(0), 
-        isAr(false) {
-            this->tempoMiliseg = tempoMiliseg > 0 ? tempoMiliseg : 100;
-        }
-        
+        Cano(float bitola, int tempoMiliseg);
+
         float getBitola() const {return this->bitola;}
 
-        float getVazao() {
-            return this->vazao;
-        }
+        float getVazao();
 
         int getTempoMiliseg() const {
             return this->tempoMiliseg;
         }
 
-        bool getIsAr() {
-            return this->isAr;
-        }
+        bool getIsAr();
 
-        void setVazao(float vazao) {
-            lock_guard<mutex> lock(mtxVazao);
-            this->vazao = vazao;
-        }
+        void setVazao(float vazao);
 
-        void setIsAr(bool isAr) {
-            this->isAr = isAr;
-        }
+        void setIsAr(bool isAr);
 };

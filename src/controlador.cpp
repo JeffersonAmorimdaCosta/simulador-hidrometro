@@ -8,6 +8,22 @@
 
 using namespace std;
 
+Controlador::Controlador(int intervaloImagem, Hidrometro& hidrometro, Display& display, filesystem::path diretorioSaida)
+    : intervaloImagem(intervaloImagem),
+      hidrometro(hidrometro),
+      display(display),
+      diretorioSaida(std::move(diretorioSaida)),
+      salvarImagens(!this->diretorioSaida.empty()) {}
+
+Controlador::~Controlador() {
+    pararControle();
+    display.fecharJanela();
+}
+
+string Controlador::consumoFormatado() {
+    return this->hidrometro.getLeituraFormatada();
+}
+
 void Controlador::controlar() {
     int atualizacao = this->hidrometro.getEntrada().getTempoMiliseg();
 
@@ -28,17 +44,7 @@ void Controlador::controlar() {
 }
 
 void Controlador::exibicao() {
-    string caminhoRel = "../images/medicoes_202311250016/";
-    int m3 = 1;
-    string caminhoAbs;
-    bool salvar;
     while (!this->parar.load()) {
-        stringstream oss;
-        oss << setw(2) << setfill('0') << m3 << ".jpeg";
-        caminhoAbs = filesystem::absolute(caminhoRel + oss.str()).string();
-
-        salvar = this->hidrometro.getVolume() == m3;
-
         cv::Mat frame = this->display.gerarImagem(this->consumoFormatado());
 
         if (frame.empty()) {
@@ -47,21 +53,28 @@ void Controlador::exibicao() {
         }
 
         this->display.exibirImagem(frame, this->intervaloImagem);
-        
-        if (salvar) {
-            this->display.salvarImagemJpeg(frame, caminhoAbs);
-            m3++;
+
+        if (salvarImagens && this->hidrometro.getVolume() >= proximoVolumeSnapshot) {
+            filesystem::create_directories(diretorioSaida);
+            std::stringstream oss;
+            oss << setw(2) << setfill('0') << proximoVolumeSnapshot << ".jpeg";
+            auto caminho = diretorioSaida / oss.str();
+            this->display.salvarImagemJpeg(frame, caminho.string());
+            ++proximoVolumeSnapshot;
         }
-    }    
+    }
 }
 
 void Controlador::iniciarControle() {
     this->parar = false;
     tControle = thread(&Controlador::controlar, this);
+    tDisplay = thread(&Controlador::exibicao, this);
 }
 
 void Controlador::pararControle() {
     this->parar = true;
     if (tControle.joinable())
         this->tControle.join();
+    if (tDisplay.joinable())
+        this->tDisplay.join();
 }

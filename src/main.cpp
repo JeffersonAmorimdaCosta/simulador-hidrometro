@@ -1,10 +1,11 @@
 #include <iostream>
-#include "Hidrometro.hpp"
-#include "Cano.hpp"
-#include "Display.hpp"
-#include "Controlador.hpp"
+#include "hidrometro.hpp"
+#include "cano.hpp"
+#include "display.hpp"
+#include "controlador.hpp"
 #include <filesystem>
 #include <string>
+#include <vector>
 
 using namespace std;
 
@@ -16,27 +17,41 @@ int main(void) {
 
     int tempoExecucaoSeg = 30;
 
-    Cano c1(1.5, intervaloVazao);
-    Cano c2(2.5, intervaloVazao);
-    Hidrometro h(c1, c2, volumeMaximo, perdaAr);
-    Display d("../images/base/imagem_base_hidrometro.png", "Hidrometro");
-    Controlador controlador(intervaloImagemMs, h, d);
+    vector<unique_ptr<Cano>> canosEntrada;
+    vector<unique_ptr<Cano>> canosSaida;
+    vector<unique_ptr<Hidrometro>> hidrometros;
+    vector<unique_ptr<Display>> displays;
+    vector<unique_ptr<Controlador>> controladores;
 
-    cout << "Iniciando a simulacao..." << endl;
+    filesystem::path diretorioSaida = filesystem::current_path() / "medicoes";
+    filesystem::create_directories(diretorioSaida);
 
-    controlador.iniciarControle();
+    int quantidadeSimuladores = 5;
 
-    thread tPrincipal([&]() {
-        this_thread::sleep_for(chrono::seconds(tempoExecucaoSeg));
-        controlador.pararControle();
-    });
+    cout << "Iniciando " << quantidadeSimuladores << " simuladores..." << endl;
 
-    controlador.exibicao();
+    for (int i = 0; i < quantidadeSimuladores; ++i) {
+        canosEntrada.emplace_back(make_unique<Cano>(1.5f + i * 0.1f, intervaloVazao));
+        canosSaida.emplace_back(make_unique<Cano>(2.0f + i * 0.1f, intervaloVazao));
+        hidrometros.emplace_back(make_unique<Hidrometro>(*canosEntrada.back(), *canosSaida.back(), volumeMaximo, perdaAr));
 
-    if (tPrincipal.joinable())
-        tPrincipal.join();
+        string nomeJanela = "Hidrometro-" + to_string(i + 1);
+        filesystem::path dirInstancia = diretorioSaida / ("simulador_" + to_string(i + 1));
+        displays.emplace_back(make_unique<Display>("../images/base/imagem_base_hidrometro.png", nomeJanela));
+        controladores.emplace_back(make_unique<Controlador>(intervaloImagemMs, *hidrometros.back(), *displays.back(), dirInstancia));
+    }
 
-    cout << "Concluindo a simulacao..." << endl;
+    for (auto& controlador : controladores) {
+        controlador->iniciarControle();
+    }
+
+    this_thread::sleep_for(chrono::seconds(tempoExecucaoSeg));
+
+    for (auto& controlador : controladores) {
+        controlador->pararControle();
+    }
+
+    cout << "Simulacao concluida." << endl;
 
     return 0;
 }
