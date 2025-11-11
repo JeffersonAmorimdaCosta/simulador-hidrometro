@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <cstdio>
 #include <sstream>
+#include <chrono>
 
 using namespace std;
 
@@ -52,7 +53,8 @@ void Controlador::exibicao() {
             return;
         }
 
-        this->display.exibirImagem(frame, this->intervaloImagem);
+    // push frame to the central display manager
+    Display::pushFrame(this->display.getNomeJanela(), frame);
 
         if (salvarImagens && this->hidrometro.getVolume() >= proximoVolumeSnapshot) {
             filesystem::create_directories(diretorioSaida);
@@ -62,6 +64,8 @@ void Controlador::exibicao() {
             this->display.salvarImagemJpeg(frame, caminho.string());
             ++proximoVolumeSnapshot;
         }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(this->intervaloImagem));
     }
 }
 
@@ -78,3 +82,6 @@ void Controlador::pararControle() {
     if (tDisplay.joinable())
         this->tDisplay.join();
 }
+
+// new setters used by facade
+// setters implemented inline in header

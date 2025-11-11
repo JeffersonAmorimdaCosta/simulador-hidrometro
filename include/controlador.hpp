@@ -50,4 +50,8 @@ class Controlador {
 
             void iniciarControle();
             void pararControle();
+            // new setters for facade control
+            void setSalvarImagens(bool salvar) { this->salvarImagens = salvar; }
+            void setDiretorioSaida(const std::filesystem::path& path) { this->diretorioSaida = path; this->salvarImagens = !this->diretorioSaida.empty(); }
+            bool getSalvarImagens() const { return this->salvarImagens; }
 };

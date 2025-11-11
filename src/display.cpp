@@ -1,18 +1,22 @@
 #include "display.hpp"
-// #include <cairomm/cairomm.h>
 #include <iostream>
 #include <sstream>
 #include <iomanip>
 #include <atomic>
+#include <unordered_map>
+#include <chrono>
 
 using namespace std;
 
 std::mutex Display::guiMutex;
 
+std::unordered_map<std::string, cv::Mat> Display::frameBuffers;
+std::unordered_map<std::string, std::unique_ptr<std::mutex>> Display::frameMutexes;
+std::mutex Display::mapMutex;
+
 Display::Display(string caminhoImagemBase, string nomeJanela)
     : caminhoImagemBase(std::move(caminhoImagemBase)), nomeJanela(std::move(nomeJanela)) {
-    std::lock_guard<std::mutex> lock(guiMutex);
-    cv::namedWindow(this->nomeJanela, cv::WINDOW_NORMAL);
+    Display::registerWindow(this->nomeJanela);
 }
 
 cv::Mat Display::gerarImagem(string consumo) {
@@ -47,16 +51,7 @@ cv::Mat Display::gerarImagem(string consumo) {
         cont++;
     }
 
-    cv::resizeWindow(this->nomeJanela, 800, 700);
-    cv::moveWindow(this->nomeJanela, 0, 0);
-
     return frame;
-}
-
-void Display::exibirImagem(cv::Mat& frame, int tempo) {
-    std::lock_guard<std::mutex> lock(guiMutex);
-    cv::imshow(this->nomeJanela, frame);
-    cv::waitKey(tempo);
 }
 
 void Display::salvarImagemJpeg(cv::Mat& frame, string caminho) {
@@ -66,6 +61,83 @@ void Display::salvarImagemJpeg(cv::Mat& frame, string caminho) {
 }
 
 void Display::fecharJanela() {
-    std::lock_guard<std::mutex> lock(guiMutex);
-    cv::destroyWindow(this->nomeJanela);
+    Display::unregisterWindow(this->nomeJanela);
+}
+
+void Display::registerWindow(const std::string& nomeJanela) {
+    std::lock_guard<std::mutex> lock(mapMutex);
+    if (frameBuffers.find(nomeJanela) == frameBuffers.end()) {
+        frameBuffers.emplace(nomeJanela, cv::Mat());
+        // default mutex for this buffer
+    frameMutexes.emplace(nomeJanela, std::make_unique<std::mutex>());
+        // create native window under gui mutex
+        {
+            std::lock_guard<std::mutex> gLock(guiMutex);
+            cv::namedWindow(nomeJanela, cv::WINDOW_NORMAL);
+            // set a reasonable initial window size, but do not force position every frame
+            cv::resizeWindow(nomeJanela, 800, 700);
+        }
+    }
+}
+
+void Display::unregisterWindow(const std::string& nomeJanela) {
+    {
+        std::lock_guard<std::mutex> lock(mapMutex);
+        auto it = frameBuffers.find(nomeJanela);
+        if (it != frameBuffers.end()) {
+            frameBuffers.erase(it);
+            frameMutexes.erase(nomeJanela);
+        }
+    }
+    std::lock_guard<std::mutex> gLock(guiMutex);
+    cv::destroyWindow(nomeJanela);
+}
+
+void Display::pushFrame(const std::string& nomeJanela, const cv::Mat& frame) {
+    std::lock_guard<std::mutex> lock(mapMutex);
+    auto it = frameBuffers.find(nomeJanela);
+    if (it == frameBuffers.end())
+        return;
+
+    // copy into buffer under its mutex
+    {
+        auto mit = frameMutexes.find(nomeJanela);
+        if (mit != frameMutexes.end()) {
+            std::lock_guard<std::mutex> fl(*mit->second);
+            it->second = frame.clone();
+        }
+    }
+
+    // no manager thread anymore; nothing to notify
+}
+
+void Display::processEvents(int waitMs) {
+    // copy keys under mapMutex
+    std::vector<std::string> keys;
+    {
+        std::lock_guard<std::mutex> lock(mapMutex);
+        keys.reserve(frameBuffers.size());
+        for (const auto& kv : frameBuffers)
+            keys.push_back(kv.first);
+    }
+
+    for (const auto& name : keys) {
+        cv::Mat frameCopy;
+        // copy latest frame under its mutex
+        auto mit = frameMutexes.find(name);
+        if (mit != frameMutexes.end() && mit->second) {
+            std::lock_guard<std::mutex> fl(*mit->second);
+            auto fit = frameBuffers.find(name);
+            if (fit != frameBuffers.end())
+                frameCopy = fit->second.clone();
+        }
+
+        if (!frameCopy.empty()) {
+            std::lock_guard<std::mutex> gLock(guiMutex);
+            cv::imshow(name, frameCopy);
+        }
+    }
+
+    // process GUI events
+    cv::waitKey(waitMs);
 }

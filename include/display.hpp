@@ -4,6 +4,10 @@
 #include <opencv2/opencv.hpp>
 #include "hidrometro.hpp"
 #include <mutex>
+#include <unordered_map>
+#include <thread>
+#include <atomic>
+#include <condition_variable>
 
 using namespace std;
 
@@ -12,11 +16,24 @@ class Display {
         string caminhoImagemBase, nomeJanela;
         static std::mutex guiMutex;
 
-    public:
-        Display(string caminhoImagemBase, string nomeJanela);
+        // Display manager (single thread) data structures
+    static std::unordered_map<std::string, cv::Mat> frameBuffers;
+    static std::unordered_map<std::string, std::unique_ptr<std::mutex>> frameMutexes;
+    static std::mutex mapMutex;
 
-        cv::Mat gerarImagem(string consumo);
-        void exibirImagem(cv::Mat& frame, int tempo);
-        void salvarImagemJpeg(cv::Mat& frame, string caminho);
-        void fecharJanela();
+    public:
+    Display(string caminhoImagemBase, string nomeJanela);
+
+    cv::Mat gerarImagem(string consumo);
+    void salvarImagemJpeg(cv::Mat& frame, string caminho);
+    void fecharJanela();
+
+    // manager control
+    // Process display events (must be called from the main thread on Windows)
+    static void processEvents(int waitMs = 5);
+    static void registerWindow(const std::string& nomeJanela);
+    static void unregisterWindow(const std::string& nomeJanela);
+    static void pushFrame(const std::string& nomeJanela, const cv::Mat& frame);
+
+    string getNomeJanela() const { return nomeJanela; }
 };
