@@ -61,7 +61,16 @@ int FachadaSHA::criaSHA(const std::string& nome, float bitolaEntrada, float bito
     inst.hidrometro = make_unique<Hidrometro>(*inst.entrada, *inst.saida, impl->volumeMaximo, impl->perdaAr);
 
     string nomeJanela = nome + "-" + to_string(id);
-    filesystem::path dirInstancia = filesystem::current_path() / "medicoes" / ("sha_" + to_string(id));
+
+    // --- CORREÇÃO AQUI ---
+    // Usamos .parent_path() para sair da pasta 'build'
+    // E mudamos de 'medicoes' para 'images' para o painel achar fácil
+    filesystem::path dirInstancia = filesystem::current_path().parent_path() / "images" / ("sha_" + to_string(id));
+    
+    // Cria a pasta se ela não existir (para evitar erros)
+    filesystem::create_directories(dirInstancia);
+    // ---------------------
+
     inst.display = make_unique<Display>("../images/base/imagem_base_hidrometro.png", nomeJanela);
     inst.controlador = make_unique<Controlador>(impl->intervaloImagemMs, *inst.hidrometro, *inst.display, dirInstancia);
     inst.nomeJanela = nomeJanela;
@@ -79,10 +88,33 @@ bool FachadaSHA::finalizaSHA(int id) {
     if (it == impl->instancias.end()) return false;
 
     auto &inst = it->second;
+    
+    // 1. Para as threads e fecha janela
     if (inst.controlador) {
         inst.controlador->pararControle();
     }
     if (inst.display) inst.display->fecharJanela();
+
+    // 2. --- NOVO: Apaga a pasta de imagens ---
+    try {
+        // Recalcula o caminho da pasta (mesma lógica do criaSHA)
+        std::filesystem::path dirInstancia = std::filesystem::current_path().parent_path() / "images" / ("sha_" + std::to_string(id));
+        
+        // Verifica se existe e apaga tudo dentro
+        if (std::filesystem::exists(dirInstancia)) {
+            std::error_code ec;
+            std::filesystem::remove_all(dirInstancia, ec);
+            
+            if (ec) {
+                std::cerr << "[Aviso] Nao foi possivel apagar a pasta: " << dirInstancia << " (" << ec.message() << ")" << std::endl;
+            } else {
+                std::cout << "[Info] Pasta apagada: " << dirInstancia.filename().string() << std::endl;
+            }
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "[Erro] Falha ao tentar apagar pasta: " << e.what() << std::endl;
+    }
+    // -----------------------------------------
 
     impl->instancias.erase(it);
     return true;
